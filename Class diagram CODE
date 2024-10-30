@@ -1,0 +1,280 @@
+@startuml
+
+class User {
+  -id: int
+  -role: string
+  +login()
+  +logout()
+}
+
+class Manager {
+  -email: string
+  -password: string
+  -addProductToCatalog(product: Product)
+  -removeProductFromCatalog(productId: int)
+  -addStoreForOrdering(store: Store)
+  -removeStore(storeId: int)
+  -checkProductInfo(productId: int)
+  -editFilters(filters: Filter[])
+  -reviewProductRequest(requestId: int, isApproved: boolean, comments: string)
+  -addProductToCartFromRequest(requestId: int)
+}
+
+class SupportAgent {
+  -email: string
+  -password: string
+  -respondToCustomer(inquiryId: int, message: string)
+  -handleReturnRequest(orderId: int, reason: string)
+  -refundOrder(orderId: int)
+}
+
+class Partner {
+  -warehouseAddress: string
+  -acceptOrderFromStore(orderId: int)
+  -checkOrderForDefects(orderId: int)
+  -createReturnForm(orderId: int, reason: string)
+  -generateQRCode(orderId: int)
+  -setLogisticsTransferTime(orderId: int, time: DateTime)
+  -getDeliveryInfo(address: string)
+}
+
+class Customer {
+  -address: string
+  -paymentMethods: PaymentMethod[]
+  -name: string
+  -phone: string
+  +returnProduct(orderId: int, reason: string, photos: Image[])
+  +sendMessageToSupport(message: string)
+  +searchProductInCatalog(filters: Filter[])
+  +createRequestByLink(link: string)
+  +addProductToCart(productId: int)
+  +viewOrderHistory()
+  +cancelOrder(orderId: int)
+  +leaveFeedback(productId: int, feedback: string)
+  +acceptOrder(orderId: int)
+  +viewRequest(requestId: int, isApproved: boolean, comments: string)
+  +pickUpOrder(qrCode: string)
+}
+
+class PickupPointStaff {
+  -id: int
+  -name: string
+  -pickupPointId: int
+  -contactInfo: string
+  -acceptOrder(orderId: int)
+  -issueOrder(orderId: int, qrCode: string)
+  -acceptReturn(orderId: int, qrCode: string)
+  -prepareReturnForWarehouse(orderId: int)
+  -checkOrderStatus(orderId: int)
+}
+
+' Продолжение классов и их связей следует далее...
+
+User <|-- Manager
+User <|-- Customer
+User <|-- SupportAgent
+User <|-- PickupPointStaff
+User <|-- Partner
+
+Manager -- ProductRequestReview
+ProductRequestReview -- ProductRequest
+ProductRequest -- Customer
+ProductRequest -- Product
+Customer -- Cart
+Customer -- Order
+Customer -- PaymentMethod
+Customer -- PickupPointStaff
+Customer -- Inquiry
+Inquiry -- SupportAgent
+PickupPointStaff -- PickupPoint
+PickupPoint -- Logistics
+PickupPoint -- Order
+Logistics -- Partner
+Cart -- CartItem
+CartItem -- OrderItem
+CartItem -- Product
+OrderItem -- Order
+Order -- PaymentMethod
+Product -- Store
+Product -- Catalog
+Product -- Filter
+Catalog -- Filter
+class Logistics {
+  -department_id: int
+  -region: string
+  -capacity: int
+  -current_load: int
+  -contact_info: string
+  -acceptOrderFromPartner(orderId: int)
+  -inspectOrder(orderId: int)
+  -createReturnRequest(orderId: int, reason: string)
+  -requestRefund(orderId: int)
+  -setDeliveryTime(orderId: int, time: DateTime)
+}
+
+class PickupPoint {
+  -id: int
+  -address: string
+  -capacity: int
+  -currentOrders: List[Order]
+  -staff: List[PickPointStaff]
+  -workingHours: string
+  -contactPhone: string
+  -returnedOrders: List[Order]
+  -acceptOrder(order: Order)
+  -notifyCustomer(order: Order)
+  -issueOrder(orderId: int, qrCode: string)
+  -acceptReturn(orderId: int, qrCode: string)
+  -sendReturnToWarehouse(orderId: int)
+  -getAvailableCapacity()
+  -getOrderStatus(orderId: int)
+}
+
+class Inquiry {
+  -id: int
+  -type: string
+  -details: string
+  +createInquiry(userId: int, subject: string, message: string)
+  +deleteInquiry(userId: int)
+  +getInfoInquiry(inquiryId: int)
+  -updateInquiryStatus(inquiryId: int, status: string)
+  -respondToInquiry(inquiryId: int, response: string)
+  -getUserInquiries(userId: int)
+}
+
+class ProductRequestReview {
+  -requestId: int
+  -managerId: int
+  -reviewDate: DateTime
+  -isApproved: boolean
+  -comments: string
+  -reviewProductRequest(requestId: int, status: string, reviewComments: string)
+  -getPendingRequests()
+}
+
+class ProductRequest {
+  -id: int
+  -customerId: int
+  -productLink: string
+  -articleNumber: string
+  -color: string
+  -size: string
+  -quantity: int
+  -status: string
+  -reasonForRejection: string
+  -createdAt: DateTime
+  -updatedAt: DateTime
+  +createRequest(customerId: int, productLink: string, articleNumber: string, color: string, size: string, quantity: int)
+  -changeStatus(newStatus: string, reasonForRejection: string)
+  -removeProductRequest(ProductRequestId: int)
+  +getRequestStatus(requestId: int)
+}
+
+class PaymentMethod {
+  -id: int
+  -type: string
+  -details: string
+  +addPaymentMethod(methodName: string, details: string)
+  +editPaymentMethod(methodId: int, methodName: string, details: string)
+  +removePaymentMethod(methodId: int)
+  -getPaymentMethods(userId: int)
+  -validatePaymentMethod(methodId: int)
+}
+
+class Cart {
+  -items: CartItem[]
+  -customerId: int
+  +addItem(productId: int, quantity: int)
+  +removeItem(productId: int)
+  +calculateTotal()
+}
+
+class CartItem {
+  -productId: int
+  -quantity: int
+  -price: decimal
+  +removeItem(productid: int)
+  +updateQuantity(productid: int, newquantity: int)
+  +addItem(productId: int)
+  +getProductInfo(productId: int)
+}
+
+class OrderItem {
+  -productId: int
+  -quantity: int
+  -price: decimal
+  +removeOrderItem(orderId: int, productId: int, reason: string)
+}
+
+class Order {
+  -id: int
+  -customerId: int
+  -status: string
+  -items: OrderItem[]
+  -totalPrice: decimal
+  -deliveryAddress: string
+  -paymentMethod: PaymentMethod
+  -qrCode: string
+  -returnReason: string
+  +calculateTotalPrice()
+  -updateStatus(newStatus: string)
+  -addItemFromRequest(ProductRequest request)
+}
+
+class Product {
+  -id: int
+  -name: string
+  -description: string
+  -price: decimal
+  -category: string
+  -stock: int
+  -storeId: int
+  -source: string
+  -requestId: int
+  -createProduct(name: string, description: string, price: float, stockQuantity: int, category: string, images: Image[])
+  -editProduct(productId: int, name: string, description: string, price: float, stockQuantity: int, category: string, images: Image[])
+  -deleteProduct(productId: int)
+  -updateStockQuantity(productId: int, newQuantity: int)
+  +getProductInfo(productId: int)
+  +getProductRating(productId: int)
+  +addProductReview(productId: int, review: string)
+}
+
+class Store {
+  -id: int
+  -name: string
+  -url: string
+  -isAvailable: boolean
+  -createStore(storeName: string, country: string)
+  -deleteStore(storeId: int)
+  -addProductToStore(store_id: int, product_id: int)
+  -removeProductFromStore(storeId: int, productId: int)
+  +getStoreInfo(storeId: int)
+  +getStoreProducts(storeId: int)
+}
+
+class Catalog {
+  -id: int
+  -name: string
+  -products: products[]
+  -addProduct(productId: int)
+  -removeProduct(productId: int)
+  -addStore(storeId: int)
+  -removeStore(storeId: int)
+  +searchProducts(request: string)
+  +getStoreProducts(storeId: int)
+}
+
+class Filter {
+  -id: int
+  -name: string
+  -value: string[]
+  +applyFilter(products: Product[], filterType: string, filterValue: string)
+  +clearFilter(filterId: int)
+  +getAvailableFilters(products: Product[])
+  +saveFilter(filterType: string, filterValue: string)
+  -editFilter(filterId: int)
+  -removeFilter(filterId: int)
+}
+
+@enduml
