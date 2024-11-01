@@ -1,0 +1,120 @@
+@startuml
+
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+' Концептуальная модель №1
+entity "Клиент1" as client1 {
+  *КлиентID1 : number <<PK>>
+}
+
+entity "Заказ1" as order1 {
+  *ЗаказID1 : number <<PK>>
+--
+  КлиентID1 : number <<FK>>
+}
+
+entity "Продукт1" as product1 {
+  *ПродуктID1 : number <<PK>>
+}
+
+client1 ||--o{ order1 : Делает
+order1 }|--o{ product1 : Содержит
+
+' Логическая модель №1
+entity "Клиент2" as client2 {
+  *КлиентID2 : number <<PK>>
+--
+  Имя : text
+  Адрес : text
+  Телефон : text
+}
+
+entity "Клиент_заказ" as client_order {
+  *КлиентID2 : number <<PK, FK>>
+  *ЗаказID2 : number <<PK, FK>>
+}
+
+entity "Заказ2" as order2 {
+  *ЗаказID2 : number <<PK>>
+--
+  Дата заказа : date
+  Сумма : number
+}
+
+entity "Заказ_продукт" as order_product {
+  *ЗаказID2 : number <<PK, FK>>
+  *ПродуктID2 : number <<PK, FK>>
+}
+
+entity "Продукт2" as product2 {
+  *ПродуктID2 : number <<PK>>
+--
+  Название : text
+  Цена : number
+}
+
+client2 ||--o{ client_order
+client_order }o--|| order2
+order2 }|--o{ order_product
+order_product }o--|{ product2
+
+' Концептуальная модель №2
+entity "Автор1" as author1 {
+  *АвторID1 : number <<PK>>
+}
+
+entity "Книга1" as book1 {
+  *КнигаID1 : number <<PK>>
+}
+
+entity "Читатель1" as reader1 {
+  *ЧитательID1 : number <<PK>>
+}
+
+author1 }o--|{ book1 : Пишет
+reader1 }o--o{ book1 : читает
+
+' Логическая модель №2
+entity "Автор2" as author2 {
+  *АвторID2 : number <<PK>>
+--
+  Имя : text
+  Дата рождения : date
+}
+
+entity "Автор_книга" as author_book {
+  *АвторID2 : number <<PK, FK>>
+  *КнигаID2 : number <<PK, FK>>
+}
+
+entity "Книга2" as book2 {
+  *КнигаID2 : number <<PK>>
+--
+  Название : text
+  Издательство : text
+  Год издания : date
+}
+
+entity "Книга_читатель" as book_reader {
+  *КнигаID2 : number <<PK, FK>>
+  *ЧитательID2 : number <<PK, FK>>
+}
+
+entity "Читатель2" as reader2 {
+  *ЧитательID2 : number <<PK>>
+--
+  Имя : text
+  Адрес : text
+  Номер читательского билета : text
+}
+
+author2 |o--|{ author_book
+author_book }o--|| book2
+book2 ||--o{ book_reader
+book_reader }o--|| reader2
+
+@enduml
