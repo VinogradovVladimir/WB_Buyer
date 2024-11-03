@@ -33,14 +33,11 @@ entity "Клиент2" as client2 {
   Телефон : text
 }
 
-entity "Клиент_заказ" as client_order {
-  *КлиентID2 : number <<PK, FK>>
-  *ЗаказID2 : number <<PK, FK>>
-}
 
 entity "Заказ2" as order2 {
   *ЗаказID2 : number <<PK>>
 --
+КлиентID2 : number <<FK>>
   Дата заказа : date
   Сумма : number
 }
@@ -57,8 +54,7 @@ entity "Продукт2" as product2 {
   Цена : number
 }
 
-client2 ||--o{ client_order
-client_order }o--|| order2
+client2 ||--o{ order2
 order2 }|--o{ order_product
 order_product }o--|{ product2
 
@@ -86,10 +82,6 @@ entity "Автор2" as author2 {
   Дата рождения : date
 }
 
-entity "Автор_книга" as author_book {
-  *АвторID2 : number <<PK, FK>>
-  *КнигаID2 : number <<PK, FK>>
-}
 
 entity "Книга2" as book2 {
   *КнигаID2 : number <<PK>>
@@ -112,8 +104,7 @@ entity "Читатель2" as reader2 {
   Номер читательского билета : text
 }
 
-author2 |o--|{ author_book
-author_book }o--|| book2
+author2 |o--|{ book2
 book2 ||--o{ book_reader
 book_reader }o--|| reader2
 
