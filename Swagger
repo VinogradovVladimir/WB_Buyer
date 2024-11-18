@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: WB Buyer Product Search API
+  version: 1.0.0
+  description: API для поиска продуктов в каталоге WB Buyer и создания/рассмотрения заявки на товар.
+servers:
+  - url: http://wbbuyer.com/v1
+
+tags:
+  - name: Product Search
+    description: Поиск товаров в каталоге WB Buyer.
+  - name: Product Request
+    description: Создание и управление заявками на товары.
+
+paths:
+  /products:
+    get:
+      tags:
+        - Product Search
+      summary: Поиск товаров в каталоге
+      description: Поиск товаров на основе различных критериев.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Строка поискового запроса.
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Категория товара.
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+            format: float
+          description: Минимальная цена товара.
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+            format: float
+          description: Максимальная цена товара.
+        - in: query
+          name: brand
+          schema:
+            type: string
+          description: Фильтр по бренду товара.
+        - in: query
+          name: size
+          schema:
+            type: string
+          description: Фильтр по размеру товара.
+        - in: query
+          name: color
+          schema:
+            type: string
+          description: Фильтр по цвету товара.
+      responses:
+        '200':
+          description: Успешный поиск товаров.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: Неверный запрос. Некорректные параметры поиска.
+        '500':
+          description: Внутренняя ошибка сервера.
+
+  /requests:
+    post:
+      tags:
+        - Product Request
+      summary: Создание заявки на товар
+      description: Отправка запроса на товар, который не был найден в каталоге.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Заявка на товар успешно создана.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRequest'
+        '400':
+          description: Неверный запрос. Некорректные данные заявки.
+        '500':
+          description: Внутренняя ошибка сервера.
+    get:
+      tags:
+        - Product Request
+      summary: Получение всех заявок на товары (для авторизованных пользователей - Клиент/Менеджер)
+      description: Получение списка всех заявок на товары. Требуется соответствующая авторизация.
+      security:
+        - bearerAuth: [] # Пример схемы безопасности, настраивайте по необходимости
+      responses:
+        '200':
+          description: Успешное получение заявок на товары.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductRequest'
+        '401':
+          description: Неавторизован.
+        '500':
+          description: Внутренняя ошибка сервера.
+
+  /requests/{requestId}/review:  # Новый путь для ответа менеджера
+    patch: # или put, в зависимости от вашей логики
+      tags:
+        - Product Request
+      summary: Рассмотрение и ответ на заявку на товар (только для менеджера)
+      description: Позволяет менеджеру рассмотреть и ответить на конкретную заявку на товар, одобрив или отклонив её.
+      security:
+        - bearerAuth: [] # Предполагается авторизация менеджера
+      parameters:
+        - in: path
+          name: requestId
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: ID заявки на товар.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequestReview'
+      responses:
+        '200': # Успешное обновление статуса заявки
+          description: Заявка на товар успешно рассмотрена.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRequest' # Возвращаем обновленную заявку
+        '400':
+          description: Неверный запрос. Некорректные данные или заявка не найдена.
+        '401':  # Неавторизованный доступ
+          description: Неавторизован. Только менеджеры могут рассматривать заявки.
+        '404': # Заявка не найдена
+          description: Заявка на товар не найдена.
+        '500':
+          description: Внутренняя ошибка сервера.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT  # или другой формат токена
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID товара.
+        name:
+          type: string
+          description: Название товара.
+        description:
+          type: string
+          description: Описание товара.
+        price:
+          type: number
+          format: float
+          description: Цена товара.
+        category:
+          type: string
+          description: Категория товара.
+        brand:
+          type: string
+          description: Бренд товара.
+        size:
+          type: string
+          description: Размер товара.
+        color:
+          type: string
+          description: Цвет товара.
+        # Добавьте другие поля продукта по необходимости (изображения, характеристики и т.д.)
+
+    ProductRequest:
+      type: object
+      required:
+        - productLink
+      properties:
+        productLink:
+          type: string
+          description: Ссылка на страницу товара в стороннем магазине.
+        articleNumber: 
+          type: string
+          description: Артикул запрашиваемого товара.
+        color:
+          type: string
+          description: Запрашиваемый цвет товара.
+        size:
+          type: string
+          description: Запрашиваемый размер товара.
+        quantity:
+          type: integer
+          description: Запрашиваемое количество товара.
+        comment:
+          type: string
+          description: Дополнительная информация от пользователя.
+
+    ProductRequestReview:
+      type: object
+      required:
+        - isApproved
+      properties:
+        isApproved:
+          type: boolean
+          description: Одобрена или отклонена заявка на товар.
+        comments:
+          type: string
+          description: Дополнительные комментарии от менеджера.
+        price: # Цена, установленная менеджером (если заявка одобрена)
+          type: number
+          format: float
+          description: Цена товара (если заявка одобрена).
